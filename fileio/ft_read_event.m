@@ -24,6 +24,10 @@ function [event] = ft_read_event(filename, varargin)
 %                   meaning that an offset of one sample in both directions
 %                   is compensated for)
 %
+% Additional CIMeC only options:
+%   'flip'          Flips the order of the trigger bits for Neuromag. Use
+%                   it if you triggers look weird. (default = false)
+%
 % Furthermore, you can specify optional arguments as key-value pairs
 % for filtering the events, e.g. to select only events of a specific
 % type, of a specific value, or events between a specific begin and
@@ -140,6 +144,9 @@ flt_maxnumber    = ft_getopt(varargin, 'maxnumber');
 % thie allows blocking reads to avoid having to poll many times for online processing
 blocking         = ft_getopt(varargin, 'blocking', false); % true or false
 timeout          = ft_getopt(varargin, 'timeout', 5); % seconds
+
+% CIMeC only options
+flip             = ft_getopt(varargin, 'flip', false);
 
 % convert from 'yes'/'no' into boolean
 blocking = istrue(blocking);
@@ -1291,7 +1298,11 @@ switch eventformat
             new_triggers(end+1).type = 'Trigger';
             new_triggers(end).sample = all_samples(i);
             [sel1, sel2] = match_str({cur_triggers.type}, {'STI001', 'STI002', 'STI003', 'STI004', 'STI005', 'STI006', 'STI007', 'STI008'});
-            new_triggers(end).value = bin2dec((dec2bin(sum(2.^(sel2-1)), trigger_bits)));
+            if flip
+              new_triggers(end).value = bin2dec(fliplr(dec2bin(sum(2.^(sel2-1)), trigger_bits)));
+            else
+              new_triggers(end).value = bin2dec((dec2bin(sum(2.^(sel2-1)), trigger_bits)));
+            end %if
           end %if
           
           i = i + j;

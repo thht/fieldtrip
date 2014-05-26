@@ -70,6 +70,9 @@ if ~isfield(cfg, 'eventformat'),  cfg.eventformat  = []; end
 if ~isfield(cfg, 'headerformat'), cfg.headerformat = []; end
 if ~isfield(cfg, 'dataformat'),   cfg.dataformat   = []; end
 
+% CIMeC only flip option for Neuromag systems
+if ~isfield(cfg, 'flip'), cfg.flip = false; end
+
 % read the header, contains the sampling frequency
 hdr = ft_read_header(cfg.headerfile, 'headerformat', cfg.headerformat);
 
@@ -80,7 +83,7 @@ if isfield(cfg, 'event')
 else
   try
     fprintf('reading the events from ''%s''\n', cfg.headerfile);
-    event = ft_read_event(cfg.headerfile, 'headerformat', cfg.headerformat, 'eventformat', cfg.eventformat, 'dataformat', cfg.dataformat);
+    event = ft_read_event(cfg.headerfile, 'headerformat', cfg.headerformat, 'eventformat', cfg.eventformat, 'dataformat', cfg.dataformat, 'flip', cfg.flip);
   catch
     % ensure that it has the correct fields, even if it is empty
     event = struct('type', {}, 'value', {}, 'sample', {}, 'offset', {}, 'duration', {});
