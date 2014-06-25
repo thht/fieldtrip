@@ -185,7 +185,7 @@ switch eventformat
       '2. If you have used one of the flipped versions, you have to do two things:\n' ...
       '2.1. Delete the "_v2_flipped" part from the eventformat field.\n' ...
       '2.2. Make sure that ft_read_event is called with cfg.flipped = true. If you are do not specify a trialfun in the ft_definetrial call, it is enough to set cfg.flip = true there.']);
-    error(errmsg);
+    error('fieldtrip_cimec:ft_read_event:v2_called', errmsg);
 
   case 'fcdc_global'
     event = event_queue;
