@@ -87,6 +87,7 @@ else
   catch
     % ensure that it has the correct fields, even if it is empty
     event = struct('type', {}, 'value', {}, 'sample', {}, 'offset', {}, 'duration', {});
+    rethrow(e);
   end
 end
 
