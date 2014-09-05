@@ -1771,6 +1771,29 @@ switch eventformat
         end
       end
     end
+
+  case 'plexon_plx_v2'
+    ft_hastoolbox('PLEXON', 1);
+    if isempty(hdr)
+      hdr = ft_read_header(filename, 'headerformat', headerformat);
+    end %if
+    [~, evchans] = plx_event_chanmap(filename);
+    [~, names] = plx_event_names(filename);
+
+    for i=1:length(hdr.orig.EVCounts)
+      if hdr.orig.EVCounts(i) > 0
+        [n, ts, sv] = plx_event_ts(filename, i-1);
+        type = names(find(evchans == i-1), :);
+
+        for j=1:n
+          event(end+1).type = type;
+          event(end).sample = round(ts(j)*hdr.Fs) + 1;
+          if sv(j) ~= 0
+            event(end).value = sv(j);
+          end %if
+        end %for
+      end %if
+    end %for
   otherwise
     warning('FieldTrip:ft_read_event:unsupported_event_format','unsupported event format (%s)', eventformat);
     event = [];
