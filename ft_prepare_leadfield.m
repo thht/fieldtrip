@@ -102,7 +102,7 @@ end
 % abort if called without data argument. this is not safe as it could lead
 % to wrong channel order...
 if nargin < 2
-  error('Calling ft_prepare_leadfield without the data argument is unsafe. If the channel order differs in the data and the grad field, you will end up with wrong leadfields!!!\n Always call this function with the data you are about to use for ft_sourceanalysis!');
+  error('Calling ft_prepare_leadfield without the data argument is unsafe. If the channel order differs in the data and the grad field, you will end up with wrong leadfields!!! Always call this function with the data you are about to use for ft_sourceanalysis!');
 end %if
 
 % remove grad and elec field from cfg to be sure...
