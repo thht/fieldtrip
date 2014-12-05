@@ -1827,6 +1827,14 @@ if isempty(event)
   event = struct('type', {}, 'value', {}, 'sample', {}, 'offset', {}, 'duration', {});
 end
 
+if flip
+  warning(sprintf(['\nWarning!!! You have turned on the cfg.flip option. It is very very likely that you did not want to do this!!!\n' ...
+    'If you just copy and pasted the cfg options from the tutorial and are now running it on your own\n' ...
+    'data, you should turn it off!!!\n' ...
+    'If you do not know, why you have set cfg.flip = true; delete it.\n\n' ...
+    'Again: You are probably doing something wrong here!!!\n']));
+end %if
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % poll implementation for backwards compatibility with ft buffer version 1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
