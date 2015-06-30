@@ -78,7 +78,7 @@ yrange    = istrue(yrange);
 clear     = istrue(clear);
 
 % get the figure handle, dependent on MATLAB version
-if matlabversion('2014b', Inf) % >= 2014b?
+if ft_platform_supports('graphics_objects')
  while ~isa(handle, 'matlab.ui.Figure')
     handle = p;
     p = get(handle, 'parent');
@@ -353,14 +353,14 @@ if ~isempty(callback)
     callback  = {funhandle, val};
   end
   for icmenu = 1:numel(hcmenuopt)
-    set(hcmenuopt(icmenu),'callback',{@evalContextCallback, callback{:}})
+    set(hcmenuopt(icmenu),'callback',{@evalcontextcallback, callback{:}})
   end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBFUNCTION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function evalContextCallback(hcmenuopt, eventdata, varargin)
+function evalcontextcallback(hcmenuopt, eventdata, varargin)
 
 % delete selection box if present
 % get parent (uimenu -> uicontextmenu -> parent)
