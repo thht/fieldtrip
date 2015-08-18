@@ -122,7 +122,7 @@ cfg = ft_checkconfig(cfg, 'rename',   {'blc', 'demean'});
 % method specific defaults
 switch cfg.method
   case {'ar'}
-    cfg.absnoise = ft_getopt(cfg, 'absnoise', 0);
+    cfg.absnoise = ft_getopt(cfg, 'absnoise', zeros(cfg.nsignal,1));
     cfg          = ft_checkconfig(cfg, 'required', {'params' 'noisecov'});
   case {'linear_mix'}
     cfg.bpfilter = ft_getopt(cfg, 'bpfilter', 'yes');
@@ -177,10 +177,10 @@ switch cfg.method
         tmp(:, m) = params'*state0 + noise(:,m);
       end
       
-      if cfg.absnoise>0
-        trial{k} = trial{k} + cfg.absnoise.*randn(size(trial{k}));
-      end
       trial{k} = tmp(:,nlag+1:end);
+      if any(cfg.absnoise>0)
+        trial{k} = trial{k} + diag(cfg.absnoise)*randn(size(trial{k}));
+      end
       time{k}  = tim;
     end
     
