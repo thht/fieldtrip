@@ -170,10 +170,13 @@ if ~isempty(endtrial) && mod(endtrial, 1)
   endtrial = round(endtrial);
 end
 
-% if we are dealing with a compressed dataset, inflate it first
 if strcmp(dataformat, 'compressed')
-  filename = inflate_file(filename);
+  % the file is compressed, unzip on the fly
+  inflated   = true;
+  filename   = inflate_file(filename);
   dataformat = ft_filetype(filename);
+else
+  inflated   = false;
 end
 
 % ensure that the headerfile and datafile are defined, which are sometimes different than the name of the dataset
@@ -191,21 +194,19 @@ end
 
 % read the header if it is not provided
 if isempty(hdr)
-  if isempty(chanindx)
-    hdr = ft_read_header(filename, 'headerformat', headerformat);
-  else
     hdr = ft_read_header(filename, 'headerformat', headerformat, 'chanindx', chanindx);
-  end;
-end
-
-% set the default channel selection, which is all channels
-if isempty(chanindx)
-  chanindx = 1:hdr.nChans;
-end
-
-% test whether the requested channels can be accomodated
-if min(chanindx)<1 || max(chanindx)>hdr.nChans
-  error('FILEIO:InvalidChanIndx', 'selected channels are not present in the data');
+    if isempty(chanindx)
+        chanindx = 1:hdr.nChans;
+    end
+else
+    % set the default channel selection, which is all channels
+    if isempty(chanindx)
+        chanindx = 1:hdr.nChans;
+    end
+    % test whether the requested channels can be accomodated
+    if min(chanindx)<1 || max(chanindx)>hdr.nChans
+        error('FILEIO:InvalidChanIndx', 'selected channels are not present in the data');
+    end
 end
 
 % read until the end of the file if the endsample is "inf"
@@ -1401,6 +1402,11 @@ elseif requestsamples && strcmp(dimord, 'chans_samples_trials')
   begselection2 = begsample - begselection + 1;
   endselection2 = endsample - begselection + 1;
   dat = dat(:,begselection2:endselection2);
+end
+
+if inflated
+  % compressed file has been unzipped on the fly, clean up
+  delete(filename);
 end
 
 if strcmp(dataformat, 'bci2000_dat') || strcmp(dataformat, 'eyelink_asc') || strcmp(dataformat, 'gtec_mat')

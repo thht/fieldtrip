@@ -156,9 +156,12 @@ if iscell(headerformat)
 end
 
 if strcmp(headerformat, 'compressed')
-  % we are dealing with a compressed dataset, inflate it first
+  % the file is compressed, unzip on the fly
+  inflated     = true;
   filename     = inflate_file(filename);
   headerformat = ft_filetype(filename);
+else
+  inflated     = false;
 end
 
 realtime = any(strcmp(headerformat, {'fcdc_buffer', 'ctf_shm', 'fcdc_mysql'}));
@@ -2170,6 +2173,11 @@ hdr.nSamples    = double(hdr.nSamples);
 hdr.nSamplesPre = double(hdr.nSamplesPre);
 hdr.nTrials     = double(hdr.nTrials);
 hdr.nChans      = double(hdr.nChans);
+
+if inflated
+  % compressed file has been unzipped on the fly, clean up
+  delete(filename);
+end
 
 if cache && exist(headerfile, 'file')
   % put the header in the cache
