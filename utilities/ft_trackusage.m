@@ -57,6 +57,11 @@ if ~strcmp(mfilename, 'ft_trackusage')
   return
 end
 
+if ~ft_platform_supports('rng')
+  % this function should not (yet) be used on Octave
+  return
+end
+
 %% The first part pertains to keeping the tracking settings consistent over multiple MATLAB sessions
 
 % This functionality overlaps in part with what normally would be done using
@@ -129,7 +134,7 @@ event_http   = sprintf('http://api.mixpanel.com/track/?data=%s', event_base64);
 [output, status] = my_urlread(event_http);
 if ~status
   disp(output);
-  error('could not send tracker information for "%s"', event);
+  warning('could not send tracker information for "%s"', event);
 end
 
 if ~initialized
@@ -141,7 +146,7 @@ if ~initialized
   [output, status] = my_urlread(user_http);
   if ~status
     disp(output);
-    error('could not send tracker information for "%s"', event);
+    warning('could not send tracker information for "%s"', event);
   end
   
   initialized = true;

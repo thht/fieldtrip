@@ -4,8 +4,8 @@ function hs = ft_plot_sens(sens, varargin)
 %
 % Use as
 %   ft_plot_sens(sens, ...)
-% where the first argument is the sensor array as returned by READ_SENS
-% or PREPARE_VOL_SENS.
+% where the first argument is the sensor array as returned by FT_READ_SENS
+% or FT_PREPARE_VOL_SENS.
 %
 % Optional input arguments should come in key-value pairs and can include
 %   'style'           = plotting style for the points representing the channels, see plot3 (default = 'k.')
@@ -14,6 +14,7 @@ function hs = ft_plot_sens(sens, varargin)
 %   'coilorientation' = true/false, plot the orientation of each coil (default = false)
 %   'label'           = show the label, can be 'off', 'label', 'number' (default = 'off')
 %   'chantype'        = string or cell-array with strings, for example 'meg' (default = 'all')
+%   'unit'            = string, convert to the specified geometrical units (default = [])
 %
 % Example
 %   sens = ft_read_sens('Subject01.ds');
