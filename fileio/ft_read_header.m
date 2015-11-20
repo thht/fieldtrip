@@ -204,7 +204,9 @@ else
   [filename, headerfile, datafile] = dataset2files(filename, headerformat);
   if ~strcmp(filename, headerfile) && ~ft_filetype(filename, 'ctf_ds') && ~ft_filetype(filename, 'fcdc_buffer_offline') && ~ft_filetype(filename, 'fcdc_matbin')
     filename     = headerfile;                % this function should read the headerfile, not the dataset
-    headerformat = ft_filetype(filename);     % update the filetype
+    if ~strcmp(headerformat, 'ctf_old')
+      headerformat = ft_filetype(filename);     % update the filetype
+    end %if
   end
 end % if skip initial check
 

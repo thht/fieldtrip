@@ -478,12 +478,13 @@ switch eventformat
     
   case {'ctf_ds', 'ctf_meg4', 'ctf_res4', 'ctf_old'}
     % obtain the dataset name
+    [~, headerfile, datafile] = dataset2files(filename, 'dataformat');
     if ft_filetype(filename, 'ctf_meg4') ||  ft_filetype(filename, 'ctf_res4')
       filename = fileparts(filename);
     end
     [path, name, ext] = fileparts(filename);
-    headerfile = fullfile(path, [name ext], [name '.res4']);
-    datafile   = fullfile(path, [name ext], [name '.meg4']);
+    %headerfile = fullfile(path, [name ext], [name '.res4']);
+    %datafile   = fullfile(path, [name ext], [name '.meg4']);
     classfile  = fullfile(path, [name ext], 'ClassFile.cls');
     markerfile = fullfile(path, [name ext], 'MarkerFile.mrk');
     
@@ -527,7 +528,7 @@ switch eventformat
     trigindx = find(origSensType==11);
     if ~isempty(trigindx)
       % read the trigger channel and do flank detection
-      trigger = read_trigger(filename, 'header', hdr, 'dataformat', dataformat, 'begsample', flt_minsample, 'endsample', flt_maxsample, 'chanindx', trigindx, 'detectflank', detectflank, 'trigshift', trigshift, 'fixctf', true);
+      trigger = read_trigger(datafile, 'header', hdr, 'dataformat', dataformat, 'begsample', flt_minsample, 'endsample', flt_maxsample, 'chanindx', trigindx, 'detectflank', detectflank, 'trigshift', trigshift, 'fixctf', true);
       event   = appendevent(event, trigger);
     end
     

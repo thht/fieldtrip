@@ -69,7 +69,7 @@ switch format
     % convert CTF filename into filenames
     [path, file, ext] = fileparts(filename);
     if any(strcmp(ext, {'.res4' '.meg4', '.1_meg4' '.2_meg4' '.3_meg4' '.4_meg4' '.5_meg4' '.6_meg4' '.7_meg4' '.8_meg4' '.9_meg4'}))
-      filename = path;
+      %filename = path;
       [path, file, ext] = fileparts(filename);
     end
     if isempty(path) && isempty(file)
@@ -77,8 +77,8 @@ switch format
       filename = pwd;
       [path, file, ext] = fileparts(filename);
     end
-    headerfile = fullfile(filename, [file '.res4']);
-    datafile   = fullfile(filename, [file '.meg4']);
+    headerfile = fullfile(path, [file '.res4']);
+    datafile   = fullfile(path, [file '.meg4']);
     if length(path)>3 && strcmp(path(end-2:end), '.ds')
       filename = path; % this is the *.ds directory
     end
