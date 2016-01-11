@@ -326,8 +326,7 @@ switch headerformat
     end
 
   case 'besa_besa'
-    orig = read_besa_besa(filename);
-    % FIXME convert the output from the low-level reader into FT header structure
+    hdr = read_besa_besa(filename);
     
   case 'besa_avr'
     orig = read_besa_avr(filename);
@@ -1431,7 +1430,7 @@ switch headerformat
       Dim.(fname) = fval;
     end
     
-    % convert the relevant fields into teh default header structure
+    % convert the relevant fields into the default header structure
     hdr.Fs          = 1000/Var.samplinginterval;
     hdr.nChans      = length(Var.channelstatus);
     hdr.nSamples    = Var.numsamples;
