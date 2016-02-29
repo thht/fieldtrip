@@ -40,7 +40,7 @@ function [dipout] = beamformer_pcc(dip, grad, headmodel, dat, Cf, varargin)
 
 % Copyright (C) 2005-2014, Robert Oostenveld & Jan-Mathijs Schoffelen
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify
@@ -241,7 +241,7 @@ for i=1:size(dip.pos,1)
         end
         lfa  = lfa * maxpowori;
         dipout.ori{i} = maxpowori;
-        dipout.eta{i} = eta;
+        dipout.eta(i) = eta;
         % update the number of dipole components
         Ndip = size(lfa,2);
       end
@@ -333,7 +333,7 @@ if isfield(dipout, 'ori')
 end
 if isfield(dipout, 'eta')
   dipout.eta( originside) = dipout.eta;
-  dipout.eta(~originside) = {[]};
+  dipout.eta(~originside) = nan;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

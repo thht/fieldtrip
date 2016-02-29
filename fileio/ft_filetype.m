@@ -52,6 +52,8 @@ function [type] = ft_filetype(filename, desired, varargin)
 %  - Neuroscan
 %  - Plexon
 %  - SR Research Eyelink
+%  - SensoMotoric Instruments (SMI) *.txt
+%  - Tobii *.tsv
 %  - Stanford *.ply
 %  - Tucker Davis Technology
 %  - VSM-Medtech/CTF
@@ -60,7 +62,7 @@ function [type] = ft_filetype(filename, desired, varargin)
 
 % Copyright (C) 2003-2013 Robert Oostenveld
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify
@@ -771,7 +773,7 @@ elseif filetype_check_extension(filename, '.sfh') && filetype_check_header(filen
 elseif filetype_check_extension(filename, '.besa')
   type = 'besa_besa';
   manufacturer = 'BESA';
-  content = 'electrophysiological data'
+  content = 'electrophysiological data';
 elseif filetype_check_extension(filename, '.srf') && filetype_check_header(filename, [0 0 0 0], 4)
   type = 'brainvoyager_srf';
   manufacturer = 'BrainVoyager'; % see http://support.brainvoyager.com/installation-introduction/23-file-formats/375-users-guide-23-the-format-of-srf-files.html
@@ -902,6 +904,11 @@ elseif filetype_check_extension(filename, '.dig')
   type = 'curry_dig';
   manufacturer = 'Curry';
   content = 'digitizer file';
+  
+elseif filetype_check_extension(filename, '.txt') && filetype_check_header(filename, '##')
+  type = 'smi_txt';
+  manufacturer = 'SensoMotoric Instruments (SMI)';
+  content = 'eyetracker data';
   
   % known SR Research eyelink file formats
 elseif filetype_check_extension(filename, '.asc') && filetype_check_header(filename, '**')
@@ -1104,6 +1111,10 @@ elseif filetype_check_extension(filename, '.stl')
   type = 'stl';
   manufacturer = 'various';
   content = 'stereo litography file';
+elseif filetype_check_extension(filename, '.obj')
+  type = 'obj';
+  manufacturer = 'Wavefront Technologies';
+  content = 'Wavefront OBJ';
 elseif filetype_check_extension(filename, '.dcm') || filetype_check_extension(filename, '.ima') || filetype_check_header(filename, 'DICM', 128)
   type = 'dicom';
   manufacturer = 'Dicom';

@@ -1,4 +1,4 @@
-function [val] = ft_getopt(opt, key, default, emptymeaningful)
+function val = ft_getopt(opt, key, default, emptymeaningful)
 
 % FT_GETOPT gets the value of a specified option from a configuration structure
 % or from a cell-array with key-value pairs.
@@ -26,7 +26,7 @@ function [val] = ft_getopt(opt, key, default, emptymeaningful)
 
 % Copyright (C) 2011-2012, Robert Oostenveld
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify

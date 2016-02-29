@@ -77,7 +77,7 @@ function [type] = ft_senstype(input, desired)
 
 % Copyright (C) 2007-2015, Robert Oostenveld
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify
@@ -386,7 +386,7 @@ end % if isfield(sens, 'type')
 
 if strcmp(type, 'unknown') && ~recursion
   % try whether only lowercase channel labels makes a difference
-  if islabel
+  if islabel && iscellstr(input)
     recursion = true;
     type = ft_senstype(lower(input));
     recursion = false;
@@ -400,7 +400,7 @@ end
 
 if strcmp(type, 'unknown') && ~recursion
   % try whether only uppercase channel labels makes a difference
-  if islabel
+  if islabel && iscellstr(input)
     recursion = true;
     type = ft_senstype(upper(input));
     recursion = false;

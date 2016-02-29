@@ -9,7 +9,6 @@ function [shape] = ft_read_headshape(filename, varargin)
 % or
 %   [shape] = ft_read_headshape({filename1, filename2}, ...)
 %
-%
 % If you specify the filename as a cell-array, the following situations are supported:
 %  - a two-element cell-array with the file names for the left and
 %    right hemisphere, e.g. FreeSurfer's {'lh.orig' 'rh.orig'}, or
@@ -28,10 +27,10 @@ function [shape] = ft_read_headshape(filename, varargin)
 %   'concatenate' = 'no' or 'yes' (default = 'yes')
 %
 % Supported input file formats include
-%   'matlab'       Containing FieldTrip or BrainStorm headshapes or cortical meshes
-%   'stl'          STereoLithography file format, for use with CAD and generic 3D mesh editing programs
-%   'vtk'          Visualization ToolKit file format, for use with paraview
-%   'mne_*'        MNE surface description in ascii format ('mne_tri') or MNE source grid in ascii format, described as 3D points ('mne_pos')
+%   'matlab'       containing FieldTrip or BrainStorm headshapes or cortical meshes
+%   'stl'          STereoLithography file format, for use with CAD and/or generic 3D mesh editing programs
+%   'vtk'          Visualization ToolKit file format, for use with Paraview
+%   'mne_*'        MNE surface description in ASCII format ('mne_tri') or MNE source grid in ascii format, described as 3D points ('mne_pos')
 %   'ctf_*'
 %   '4d_*'
 %   'itab_asc'
@@ -58,7 +57,7 @@ function [shape] = ft_read_headshape(filename, varargin)
 
 % Copyright (C) 2008-2016 Robert Oostenveld
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify
@@ -83,17 +82,6 @@ coordsys       = ft_getopt(varargin, 'coordsys', 'head');    % for ctf or neurom
 fileformat     = ft_getopt(varargin, 'format');
 unit           = ft_getopt(varargin, 'unit');
 
-% optionally get the data from the URL and make a temporary local copy
-filename = fetch_url(filename);
-
-if isempty(fileformat)
-  % only do the autodetection if the format was not specified
-  fileformat = ft_filetype(filename);
-end
-
-if ~isempty(annotationfile) && ~strcmp(fileformat, 'mne_source')
-  error('at present extracting annotation information only works in conjunction with mne_source files');
-end
 
 % Check the input, if filename is a cell-array, call ft_read_headshape recursively and combine the outputs.
 % This is used to read the left and right hemisphere of a Freesurfer cortical segmentation.
@@ -133,7 +121,7 @@ if iscell(filename)
       end
       
       % concatenate any other fields
-      fnames = {'sulc' 'curv' 'area' 'thickness'};
+      fnames = {'sulc' 'curv' 'area' 'thickness' 'atlasroi'};
       for k = 1:numel(fnames)
         if isfield(bnd(1), fnames{k}) && isfield(bnd(2), fnames{k})
           shape.(fnames{k}) = cat(1, bnd.(fnames{k}));
@@ -202,6 +190,18 @@ if iscell(filename)
   
   return
 end % if iscell
+
+% optionally get the data from the URL and make a temporary local copy
+filename = fetch_url(filename);
+
+if isempty(fileformat)
+  % only do the autodetection if the format was not specified
+  fileformat = ft_filetype(filename);
+end
+
+if ~isempty(annotationfile) && ~strcmp(fileformat, 'mne_source')
+  error('at present extracting annotation information only works in conjunction with mne_source files');
+end
 
 % start with an empty structure
 shape           = [];
@@ -328,7 +328,8 @@ switch fileformat
       if exist(tmpfilename, 'file'), g = gifti(tmpfilename); shape.sulc = g.cdata; end
       if exist(strrep(tmpfilename, 'sulc', 'curvature'), 'file'),  g = gifti(strrep(tmpfilename, 'sulc', 'curvature')); shape.curv = g.cdata; end
       if exist(strrep(tmpfilename, 'sulc', 'thickness'), 'file'),  g = gifti(strrep(tmpfilename, 'sulc', 'thickness')); shape.thickness = g.cdata; end
-    end
+      if exist(strrep(tmpfilename, 'sulc', 'atlasroi'),  'file'),  g = gifti(strrep(tmpfilename, 'sulc', 'atlasroi'));  shape.atlasroi  = g.cdata; end
+		end
     
   case 'caret_spec'
     [spec, headerinfo] = read_caret_spec(filename);
@@ -699,6 +700,13 @@ switch fileformat
     shape.pos = pos;
     shape.tri = tri;
     
+  case 'obj'
+      ft_hastoolbox('wavefront', 1);
+      % Implemented for structure.io .obj thus far without colormapping
+      obj = read_wobj(filename);
+      shape.pos = obj.vertices;
+      shape.tri = obj.objects(2).data.vertices;
+    
   case 'vtk'
     [pos, tri] = read_vtk(filename);
     shape.pos = pos;
@@ -868,7 +876,18 @@ switch fileformat
     % FIXME do transform
     % FIXME remove vertices that are not in a triangle
     % FIXME add unit
-    
+  
+	case 'besa_sfp'
+		[lab, pos] = read_besa_sfp(filename, 0);
+		shape.pos = pos;
+		
+		% assume that all non-'headshape' points are fiducial markers
+		hs = strmatch('headshape', lab);
+		lab(hs) = [];
+		pos(hs, :) = [];
+		shape.fid.label = lab;
+		shape.fid.pos = pos;
+		
   case 'asa_elc'
     elec = ft_read_sens(filename);
     
@@ -952,5 +971,7 @@ else
   end
 end
 
+% ensure that vertex positions are given in pos, not in pnt
+shape = fixpos(shape);
 % ensure that the numerical arrays are represented in double precision and not as integers
 shape = ft_struct2double(shape);

@@ -75,7 +75,7 @@ function [event] = ft_read_event(filename, varargin)
 
 % Copyright (C) 2004-2012 Robert Oostenveld
 %
-% This file is part of FieldTrip, see http://www.ru.nl/neuroimaging/fieldtrip
+% This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
 %
 %    FieldTrip is free software: you can redistribute it and/or modify
@@ -964,6 +964,31 @@ switch eventformat
     fn = setdiff(fn, {'type', 'sample', 'value', 'offset', 'duration', 'timestamp'});
     for i=1:length(fn)
       event = rmfield(event, fn{i});
+    end
+  
+  case 'smi_txt'
+    if isempty(hdr)
+      hdr = ft_read_header(filename);
+    end
+    if isfield(hdr.orig, 'trigger')
+      % this is inefficient, since it keeps the complete data in memory
+      % but it does speed up subsequent read operations without the user
+      % having to care about it
+      smi = hdr.orig;
+    else
+      smi = read_smi_txt(filename);
+    end
+    timestamp = [smi.trigger(:).timestamp];
+    value     = [smi.trigger(:).value];
+    % note that in this dataformat the first input trigger can be before
+    % the start of the data acquisition
+    for i=1:length(timestamp)
+      event(end+1).type       = 'Trigger';
+      event(end  ).sample     = (timestamp(i)-hdr.FirstTimeStamp)/hdr.TimeStampPerSample + 1;
+      event(end  ).timestamp  = timestamp(i);
+      event(end  ).value      = value(i);
+      event(end  ).duration   = 1;
+      event(end  ).offset     = 0;
     end
     
   case 'eyelink_asc'
