@@ -1905,7 +1905,7 @@ switch eventformat
         type = names(find(evchans == i-1), :);
 
         for j=1:n
-          event(end+1).type = type;
+          event(end+1).type = deblank(type);
           event(end).sample = round(ts(j)*hdr.Fs) + 1;
           if sv(j) ~= 0
             event(end).value = sv(j);
