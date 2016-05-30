@@ -168,6 +168,12 @@ ft_preamble trackconfig
 ft_preamble debug
 ft_preamble loadvar functional
 
+if(~exist('spm','file'))
+    error('Nutmegtrip requires SPM8 in your MATLAB path. It can be downloaded from http://www.fil.ion.ucl.ac.uk/spm')
+    return
+end
+
+
 % the abort variable is set to true or false in ft_preamble_init
 if ft_abort
   return
@@ -560,9 +566,10 @@ end
 % handle mask
 if hasmsk
   % reshape to match fun
-  if strcmp(dimord, 'pos_freq_time')
+  if strcmp(dimord, 'pos_time_freq')
     % functional contains timefrequency representation
-    msk     = reshape(msk, [dim numel(functional.freq) numel(functional.time)]);
+    msk = permute(msk,[1 3 2]); % reorder to pos_time_freq
+    msk     = reshape(msk, [dim numel(functional.time) numel(functional.freq)]);
   elseif strcmp(dimord, 'pos_time')
     % functional contains evoked field
     msk     = reshape(msk, [dim numel(functional.time)]);
@@ -703,33 +710,38 @@ if ~isempty(cfg.funparameter)
 
 %        getsubfield(functional, cfg.funparameter);
 %        if(iscell(fun))
-%            st.nmt.fun = cell2mat(st.nmt.fun);
+%            st.nmt.fun{1} = cell2mat(st.nmt.fun{1});
 %        end
 
 %        switch(cfg.funparameter)
 %            case {'mom','itc'}
 
-        st.nmt.fun = fun;
+        st.nmt.fun{1} = fun;
         clear fun;
         
         if(hastime & ~hasfreq)
             % voxels x time
             st.nmt.time = functional.time;
+            if(isfield(functional,'freqbands'))
+                st.nmt.freq = functional.freqbands;
+            else
+                st.nmt.freq = [0 inf];
+            end
             
             if(~isfield(cfg,'time') & ~isfield(cfg,'vox'))
-                [~,peakind] = max(abs(st.nmt.fun(:)));
-                [peakvox_idx,peaktime_idx] = ind2sub(size(st.nmt.fun),peakind);
+                [~,peakind] = max(abs(st.nmt.fun{1}(:)));
+                [peakvox_idx,peaktime_idx] = ind2sub(size(st.nmt.fun{1}),peakind);
                 cfg.time_idx(1) = peaktime_idx;
                 cfg.vox_idx = peakvox_idx;
             end
             
             if(~isfield(cfg,'time') & isfield(cfg,'vox'))
-                [~,peaktime_idx] = max(abs(st.nmt.fun(cfg.vox_idx,:)));
+                [~,peaktime_idx] = max(abs(st.nmt.fun{1}(cfg.vox_idx,:)));
                 cfg.time_idx(1) = peaktime_idx;
             end
             
             if(isfield(cfg,'time') & ~isfield(cfg,'vox'))
-                [~,peakvox_idx] = max(abs(st.nmt.fun(cfg.time_idx,:)));
+                [~,peakvox_idx] = max(abs(st.nmt.fun{1}(cfg.time_idx,:)));
                 cfg.vox_idx = peakvox_idx;
             end
             
@@ -740,27 +752,27 @@ if ~isempty(cfg.funparameter)
                 cfg.time_idx(2) = cfg.time_idx(1);
             end
             
-            cfg.freq_idx = 1; % frequency dimension is singleton in this case
+            cfg.freq_idx = [1 1];
         elseif(hastime & hasfreq)
             % voxels x frequency x time
             st.nmt.time = functional.time;
             st.nmt.freq = functional.freqbands;
             
             if(~isfield(cfg,'time') & ~isfield(cfg,'vox'))
-                [~,peakind] = max(abs(st.nmt.fun(:)));
-                [peakvox_idx,peaktime_idx,peakfreq_idx] = ind2sub(size(st.nmt.fun),peakind);
+                [~,peakind] = max(abs(st.nmt.fun{1}(:)));
+                [peakvox_idx,peaktime_idx,peakfreq_idx] = ind2sub(size(st.nmt.fun{1}),peakind);
                 cfg.time_idx(1) = peaktime_idx;
                 cfg.freq_idx(1) = peakfreq_idx;
                 cfg.vox_idx = peakvox_idx;
             end
             
             if(~isfield(cfg,'time') & isfield(cfg,'vox'))
-                [~,peaktime_idx] = max(abs(st.nmt.fun(cfg.vox_idx,:)));
+                [~,peaktime_idx] = max(abs(st.nmt.fun{1}(cfg.vox_idx,:)));
                 cfg.time_idx(1) = peaktime_idx;
             end
             
             if(isfield(cfg,'time') & ~isfield(cfg,'vox'))
-                [~,peakvox_idx] = max(abs(st.nmt.fun(cfg.time_idx,:)));
+                [~,peakvox_idx] = max(abs(st.nmt.fun{1}(cfg.time_idx,:)));
                 cfg.vox_idx = peakvox_idx;
             end
             
@@ -770,13 +782,19 @@ if ~isempty(cfg.funparameter)
             if(length(cfg.time_idx(1)) == 1)
                 cfg.time_idx(2) = cfg.time_idx(1);
             end
+            if(length(cfg.freq_idx(1)) == 1)
+                cfg.freq_idx(2) = cfg.freq_idx(1);
+            end
         else
             cfg.time_idx = [1 1]; % no time dimension in this case, e.g., 'pow'
-            cfg.freq_idx = 1; % frequency dimension is singleton in this case
+            cfg.freq_idx = [1 1]; % frequency dimension is singleton in this case
         end
+        
+        set(st.nmt.gui.f1,'String',num2str(st.nmt.freq(:,1)));
+        set(st.nmt.gui.f2,'String',num2str(st.nmt.freq(:,2)));
 
         st.nmt.cfg = cfg;
-        st.nmt.msk = reshape(msk,size(st.nmt.fun));
+        st.nmt.msk = reshape(msk,size(st.nmt.fun{1}));
         
     else
         error('cfg.funparameter not found in functional');
@@ -795,5 +813,6 @@ switch(cfg.topoplot)
         st.nmt.grid = functional.grid;
 end
 
+cfg.axsel = 1;
 nmt_spm8_plot(cfg);
 nmt_image;
