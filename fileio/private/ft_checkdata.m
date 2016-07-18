@@ -204,8 +204,13 @@ if ~isequal(feedback, 'no')
     end
   end
 elseif ismesh
-  fprintf('the input is mesh data with %d vertices and %d triangles\n', size(mesh.pos,1), size(mesh.tri,1));
-end % give feedback
+  data = fixpos(data);
+  if numel(data)==1
+    fprintf('the input is mesh data with %d vertices and %d triangles\n', size(data.pos,1), size(data.tri,1));
+  else
+    fprintf('the input is mesh data multiple surfaces\n');
+  end
+end % give feedback    
 
 if issource && isvolume
   % it should be either one or the other: the choice here is to represent it as volume description since that is simpler to handle
@@ -1343,6 +1348,8 @@ else
   % concatenate all trials
   tmptrial = nan(ntrial, nchan, length(time));
   
+  begsmp = nan(ntrial, 1);
+  endsmp = nan(ntrial, 1);
   for i=1:ntrial
     begsmp(i) = nearest(time, data.time{i}(1));
     endsmp(i) = nearest(time, data.time{i}(end));
