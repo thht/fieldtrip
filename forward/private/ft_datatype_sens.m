@@ -203,19 +203,19 @@ switch version
     if ~isempty(amplitude) && isfield(sens, 'tra')
       % update the tra matrix for the units of amplitude, this ensures that
       % the leadfield values remain consistent with the units
-      for i=1:nchan
-        if ~isempty(regexp(sens.chanunit{i}, 'm$', 'once'))
-          % this channel is expressed as amplitude per distance
-          sens.tra(i,:)    = sens.tra(i,:) * ft_scalingfactor(sens.chanunit{i}, [amplitude '/' distance]);
-          sens.chanunit{i} = [amplitude '/' distance];
-        elseif ~isempty(regexp(sens.chanunit{i}, '[T|V]$', 'once'))
-          % this channel is expressed as amplitude
-          sens.tra(i,:)    = sens.tra(i,:) * ft_scalingfactor(sens.chanunit{i}, amplitude);
-          sens.chanunit{i} = amplitude;
-        else
-          error('unexpected channel unit "%s" in channel %d', sens.chanunit{i}, i);
-        end
-      end
+%       for i=1:nchan
+%         if ~isempty(regexp(sens.chanunit{i}, 'm$', 'once'))
+%           % this channel is expressed as amplitude per distance
+%           sens.tra(i,:)    = sens.tra(i,:) * ft_scalingfactor(sens.chanunit{i}, [amplitude '/' distance]);
+%           sens.chanunit{i} = [amplitude '/' distance];
+%         elseif ~isempty(regexp(sens.chanunit{i}, '[T|V]$', 'once'))
+%           % this channel is expressed as amplitude
+%           sens.tra(i,:)    = sens.tra(i,:) * ft_scalingfactor(sens.chanunit{i}, amplitude);
+%           sens.chanunit{i} = amplitude;
+%         else
+%           error('unexpected channel unit "%s" in channel %d', sens.chanunit{i}, i);
+%         end
+%       end
     else
       % determine the default amplityde, this may be needed to set the scaling
       if any(~cellfun(@isempty, regexp(sens.chanunit, '^T')))
@@ -287,24 +287,24 @@ switch version
         
       elseif strcmp(scaling, 'amplitude/distance') && isfield(sens, 'tra')
         for i=1:nchan
-          if strcmp(sens.chanunit{i}, amplitude)
-            % this channel is expressed as amplitude
-            coil = find(abs(sens.tra(i,:))~=0);
-            if length(coil)==1 || strcmp(sens.chantype{i}, 'megmag')
-              % this is a magnetometer channel, no conversion needed
-              continue
-            elseif length(coil)~=2
-              error('unexpected number of coils (%d) contributing to channel %s (%d)', length(coil), sens.label{i}, i);
-            end
-            baseline         = norm(sens.coilpos(coil(1),:) - sens.coilpos(coil(2),:));
-            sens.tra(i,:)    = sens.tra(i,:)/baseline; % scale with the baseline distance
-            sens.chanunit{i} = [amplitude '/' distance];
-          elseif strcmp(sens.chanunit{i}, [amplitude '/' distance])
-            % no conversion needed
-          else
-            % see http://bugzilla.fieldtriptoolbox.org/show_bug.cgi?id=3144
-            ft_warning(sprintf('unexpected channel unit "%s" in channel %d', sens.chanunit{i}, i));
-          end % if
+%           if strcmp(sens.chanunit{i}, amplitude)
+%             % this channel is expressed as amplitude
+%             coil = find(abs(sens.tra(i,:))~=0);
+%             if length(coil)==1 || strcmp(sens.chantype{i}, 'megmag')
+%               % this is a magnetometer channel, no conversion needed
+%               continue
+%             elseif length(coil)~=2
+%               error('unexpected number of coils (%d) contributing to channel %s (%d)', length(coil), sens.label{i}, i);
+%             end
+%             baseline         = norm(sens.coilpos(coil(1),:) - sens.coilpos(coil(2),:));
+%             sens.tra(i,:)    = sens.tra(i,:)/baseline; % scale with the baseline distance
+%             sens.chanunit{i} = [amplitude '/' distance];
+%           elseif strcmp(sens.chanunit{i}, [amplitude '/' distance])
+%             % no conversion needed
+%           else
+%             % see http://bugzilla.fieldtriptoolbox.org/show_bug.cgi?id=3144
+%             ft_warning(sprintf('unexpected channel unit "%s" in channel %d', sens.chanunit{i}, i));
+%           end % if
         end % for
         
       end % if strcmp scaling
