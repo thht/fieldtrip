@@ -145,6 +145,15 @@ end
 % collect and preprocess the electrodes/gradiometer and head model
 [headmodel, sens, cfg] = prepare_headmodel(cfg, data);
 
+% check if everything is in meters
+if ~strcmp(sens.unit, 'm')
+  error('Sensors MUST be provided in meters!');
+end %if
+
+if ~strcmp(cfg.grid.unit, 'm')
+  error('The grid MUST be provided in meters!');
+end %if
+
 % set the default for reducing the rank of the leadfields
 if ft_senstype(sens, 'eeg')
   cfg.reducerank = ft_getopt(cfg, 'reducerank', 3);
