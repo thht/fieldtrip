@@ -55,7 +55,7 @@ function [hdr] = ft_read_header(filename, varargin)
 %   BrainVision (*.eeg, *.seg, *.dat, *.vhdr, *.vmrk)
 %   CED - Cambridge Electronic Design (*.smr)
 %   EGI - Electrical Geodesics, Inc. (*.egis, *.ave, *.gave, *.ses, *.raw, *.sbin, *.mff)
-%   GTec (*.mat)
+%   GTec (*.mat, *.hdf5)
 %   Generic data formats (*.edf, *.gdf)
 %   Megis/BESA (*.avr, *.swf, *.besa)
 %   NeuroScan (*.eeg, *.cnt, *.avg)
@@ -204,7 +204,7 @@ else
   checkmaxfilter = ft_getopt(varargin, 'checkmaxfilter', true);
   
   if isempty(cache)
-    if any(strcmp(headerformat, {'bci2000_dat', 'eyelink_asc', 'gtec_mat', 'mega_neurone', 'smi_txt', 'biosig'}))
+    if any(strcmp(headerformat, {'bci2000_dat', 'eyelink_asc', 'gtec_mat', 'gtec_hdf5', 'mega_neurone', 'smi_txt', 'biosig'}))
       cache = true;
     else
       cache = false;
@@ -573,7 +573,13 @@ switch headerformat
     end
     % add a gradiometer structure for forward and inverse modelling
     try
-      hdr.grad = ctf2grad(orig, strcmp(coordsys, 'dewar'), coilaccuracy);
+      [grad, elec] = ctf2grad(orig, strcmp(coordsys, 'dewar'), coilaccuracy);
+      if ~isempty(grad)
+        hdr.grad = grad;
+      end
+      if ~isempty(elec)
+        hdr.elec = elec;
+      end
     catch
       % this fails if the res4 file is not correctly closed, e.g. during realtime processing
       tmp = lasterror;
@@ -972,7 +978,7 @@ switch headerformat
           for iSens = 1:numel(orig.xml.pnsSet.sensors)
             hdr.label{nbEEGchan+iSens} = num2str(orig.xml.pnsSet.sensors(iSens).sensor.name);
           end
-          if length(hdr.label) == orig.signal(2).blockhdr(1).nsignals + orig.signal(2).blockhdr(1).nsignals
+          if length(hdr.label) == orig.signal(1).blockhdr(1).nsignals + orig.signal(2).blockhdr(1).nsignals
             % good
           elseif length(hdr.label) < orig.signal(1).blockhdr(1).nsignals + orig.signal(2).blockhdr(1).nsignals
             warning('found less lables in xml.pnsSet than channels in signal 2, labeling with s2_unknownN instead')
@@ -1279,6 +1285,36 @@ switch headerformat
       hdr.label = mxDeserialize(hdr.label);
     end
     
+  case 'gtec_hdf5'
+    % check that the required low-level toolbox is available
+    ft_hastoolbox('gtec', 1);
+    % there is only a precompiled *.p reader that reads the whole file at once
+    orig = ghdf5read(filename);
+    for i=1:numel(orig.RawData.AcquisitionTaskDescription.ChannelProperties.ChannelProperties)
+      lab = orig.RawData.AcquisitionTaskDescription.ChannelProperties.ChannelProperties(i).ChannelName;
+      typ = orig.RawData.AcquisitionTaskDescription.ChannelProperties.ChannelProperties(1).ChannelType;
+      if isnumeric(lab)
+        hdr.label{i} = num2str(lab);
+      else
+        hdr.label{i} = lab;
+      end
+      if ischar(typ)
+        hdr.chantype{i} = lower(typ);
+      else
+        hdr.chantype{i} = 'unknown';
+      end
+    end
+    hdr.Fs          = orig.RawData.AcquisitionTaskDescription.SamplingFrequency;
+    hdr.nChans      = size(orig.RawData.Samples, 1);
+    hdr.nSamples    = size(orig.RawData.Samples, 2);
+    hdr.nSamplesPre = 0;
+    hdr.nTrials     = 1; % assume continuous data, not epoched
+    assert(orig.RawData.AcquisitionTaskDescription.NumberOfAcquiredChannels==hdr.nChans, 'inconsistent number of channels');
+    % remember the complete data upon request
+    if cache
+      hdr.orig = orig;
+    end
+    
   case 'gtec_mat'
     % this is a simple MATLAB format, it contains a log and a names variable
     tmp = load(headerfile);
@@ -1377,7 +1413,7 @@ switch headerformat
     % convert the measurement configuration details to an optode structure
     try
     end
-      hdr.opto = homer2opto(orig.SD);
+    hdr.opto = homer2opto(orig.SD);
     
     % keep the header details
     hdr.orig.SD = orig.SD;
@@ -2256,7 +2292,7 @@ switch headerformat
     %       for j=1:length(code)
     %         codesel = false(size(tsq));
     %         for k=1:numel(codesel)
-    %           codesel(k) = identical(tsq(k).code, code{j});
+    %           codesel(k) = isequal(tsq(k).code, code{j});
     %         end
     %         % find the first instance of this logical channel
     %         this = find(chansel(:) & codesel(:), 1);
@@ -2284,11 +2320,12 @@ switch headerformat
     end
     
   case 'riff_wave'
-    [y, fs, nbits, opts] = wavread(filename, 1); % read one sample
-    siz = wavread(filename,'size');
-    hdr.Fs          = fs;
-    hdr.nChans      = siz(2);
-    hdr.nSamples    = siz(1);
+    % prior to MATLAB R2015b this used to be done with "wavread"
+    % but the audioinfo/audioread function are at least available from 2012b up
+    info = audioinfo(filename);
+    hdr.Fs          = info.SampleRate;
+    hdr.nChans      = info.NumChannels;
+    hdr.nSamples    = info.TotalSamples;
     hdr.nSamplesPre = 0;
     hdr.nTrials     = 1;
     [p, f, x] = fileparts(filename);
@@ -2303,7 +2340,7 @@ switch headerformat
       hdr.chantype{1,1} = 'audio';
     end
     % remember the details
-    hdr.orig = opts;
+    hdr.orig = info;
     
   case 'videomeg_aud'
     hdr = read_videomeg_aud(filename);

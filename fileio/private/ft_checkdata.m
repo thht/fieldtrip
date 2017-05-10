@@ -117,7 +117,6 @@ if (~isempty(depHastrialdef))
 end
 
 % determine the type of input data
-% this can be raw, freq, timelock, comp, spike, source, volume, dip
 israw           = ft_datatype(data, 'raw');
 isfreq          = ft_datatype(data, 'freq');
 istimelock      = ft_datatype(data, 'timelock');
@@ -218,7 +217,7 @@ elseif ismesh
       fprintf('the input is mesh data with %d vertices', size(data.pos,1));
     end
   else
-    fprintf('the input is mesh data multiple surfaces\n');
+    fprintf('the input is mesh data with multiple surfaces\n');
   end
 end % give feedback
 
@@ -335,15 +334,24 @@ if ~isempty(dtype)
       issource = 1;
       okflag = 1;
     elseif isequal(dtype(iCell), {'volume'}) && (ischan || istimelock || isfreq)
-      data = parcellated2source(data);
-      data = ft_datatype_volume(data);
-      ischan = 0;
+      if isfield(data, 'brainordinate')
+        data = parcellated2source(data);
+        data = ft_datatype_volume(data);
+      else
+        error('cannot convert channel-level data to volumetric representation');
+      end
+      ischan = 0; istimelock = 0; isfreq = 0;
       isvolume = 1;
       okflag = 1;
     elseif isequal(dtype(iCell), {'source'}) && (ischan || istimelock || isfreq)
-      data = parcellated2source(data);
-      data = ft_datatype_source(data);
-      ischan = 0;
+      if isfield(data, 'brainordinate')
+        data = parcellated2source(data);
+        data = ft_datatype_source(data);
+      else
+        data = chan2source(data);
+        data = ft_datatype_source(data);
+      end % converting channel data
+      ischan = 0; istimelock = 0; isfreq = 0;
       issource = 1;
       okflag = 1;
     elseif isequal(dtype(iCell), {'volume'}) && issource
@@ -358,6 +366,13 @@ if ~isempty(dtype)
       istimelock = 0;
       iscomp = 1;
       israw = 1;
+      okflag = 1;
+    elseif isequal(dtype(iCell), {'timelock+comp'}) && israw && iscomp
+      data = raw2timelock(data);
+      data = ft_datatype_timelock(data);
+      istimelock = 1;
+      iscomp = 1;
+      israw = 0;
       okflag = 1;
     elseif isequal(dtype(iCell), {'raw'}) && issource
       data = source2raw(data);
@@ -1202,6 +1217,73 @@ end % convert from one to another bivariate representation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % convert between datatypes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [source] = chan2source(data)
+chanpos = zeros(0,3);
+chanlab = cell(0,1);
+posunit = [];
+if isfield(data, 'elec')
+  chanpos = cat(1, chanpos, data.elec.chanpos);
+  chanlab = cat(1, chanlab, data.elec.label);
+  if isfield(data.elec, 'unit')
+    posunit = data.elec.unit;
+  end
+end
+if isfield(data, 'grad')
+  chanpos = cat(1, chanpos, data.grad.chanpos);
+  chanlab = cat(1, chanlab, data.grad.label);
+  if isfield(data.grad, 'unit')
+    posunit = data.grad.unit;
+  end
+end
+if isfield(data, 'opto')
+  chanpos = cat(1, chanpos, data.opto.chanpos);
+  chanlab = cat(1, chanlab, data.opto.label);
+  if isfield(data.opto, 'unit')
+    posunit = data.opto.unit;
+  end
+end
+
+fn = fieldnames(data);
+fn = setdiff(fn, {'label', 'time', 'freq', 'hdr', 'cfg', 'grad', 'elec', 'dimord', 'unit'}); % remove irrelevant fields
+fn(~cellfun(@isempty, regexp(fn, 'dimord$'))) = []; % remove irrelevant (dimord) fields
+sel = false(size(fn));
+for i=1:numel(fn)
+  try
+    sel(i) = ismember(getdimord(data, fn{i}), {'chan', 'chan_time', 'chan_freq', 'chan_freq_time', 'chan_chan'});
+  end
+end
+parameter = fn(sel);
+
+% determine the channel indices for which the position is known
+[datsel, possel] = match_str(data.label, chanlab);
+
+source = [];
+source.pos = chanpos(possel, :);
+if ~isempty(posunit)
+  source.unit = posunit;
+end
+for i=1:numel(parameter)
+  dat = data.(parameter{i});
+  dimord = getdimord(data, parameter{i});
+  dimtok = tokenize(dimord, '_');
+  for dim=1:numel(dimtok)
+    if strcmp(dimtok{dim}, 'chan')
+      dat = dimindex(dat, dim, {datsel});
+      dimtok{dim} = 'pos';
+    end
+  end
+  dimord = sprintf('%s_', dimtok{:});
+  dimord = dimord(1:end-1); % remove the last '_'
+  % copy the data to the source representation
+  source.(parameter{i})            = dat;
+  source.([parameter{i} 'dimord']) = dimord;
+end
+% copy the descriptive fields, these are necessary for visualising the data in ft_sourceplot
+source = copyfields(data, source, {'time', 'freq'});
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% convert between datatypes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [source] = parcellated2source(data)
 if ~isfield(data, 'brainordinate')
   error('projecting parcellated data onto the full brain model geometry requires the specification of brainordinates');
@@ -1242,7 +1324,7 @@ for i=1:numel(parameter)
   source.(parameter{i}) = unparcellate(data, source, parameter{i}, parcelparam);
 end
 
-% copy over fields (these are necessary for visualising the data in ft_sourceplot)
+% copy the descriptive fields, these are necessary for visualising the data in ft_sourceplot
 source = copyfields(data, source, {'time', 'freq'});
 
 
@@ -1348,25 +1430,26 @@ if isfield(freq, 'trialinfo'), data.trialinfo = freq.trialinfo; end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % convert between datatypes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [data] = raw2timelock(data)
+function [tlck] = raw2timelock(data)
 
-nsmp = cellfun('size',data.time,2);
 data   = ft_checkdata(data, 'hassampleinfo', 'yes');
 ntrial = numel(data.trial);
 nchan  = numel(data.label);
+
 if ntrial==1
-  data.time   = data.time{1};
-  data.avg    = data.trial{1};
-  data        = rmfield(data, 'trial');
-  data.dimord = 'chan_time';
-else
+  tlck.time   = data.time{1};
+  tlck.avg    = data.trial{1};
+  tlck.label  = data.label;
+  tlck.dimord = 'chan_time';
+  tlck        = copyfields(data, tlck, {'grad', 'elec', 'opto', 'cfg', 'trialinfo', 'topo', 'unmixing', 'topolabel'});
   
-  % code below tries to construct a general time-axis where samples of all trials can fall on
-  % find earliest beginning and latest ending
-  begtime = min(cellfun(@min,data.time));
-  endtime = max(cellfun(@max,data.time));
+else
+  % the code below tries to construct a general time-axis where samples of all trials can fall on
+  % find the earliest beginning and latest ending
+  begtime = min(cellfun(@min, data.time));
+  endtime = max(cellfun(@max, data.time));
   % find 'common' sampling rate
-  fsample = 1./mean(cellfun(@mean,cellfun(@diff,data.time,'uniformoutput',false)));
+  fsample = 1./mean(cellfun(@mean, cellfun(@diff,data.time, 'uniformoutput', false)));
   % estimate number of samples
   nsmp = round((endtime-begtime)*fsample) + 1; % numerical round-off issues should be dealt with by this round, as they will/should never cause an extra sample to appear
   % construct general time-axis
@@ -1383,20 +1466,12 @@ else
     tmptrial(i,:,begsmp(i):endsmp(i)) = data.trial{i};
   end
   
-  % update the sampleinfo
-  begpad = begsmp - min(begsmp);
-  endpad = max(endsmp) - endsmp;
-  if isfield(data, 'sampleinfo')
-    data.sampleinfo = data.sampleinfo + [-begpad(:) endpad(:)];
-  end
-  
   % construct the output timelocked data
-  % data.avg     = reshape(nanmean(tmptrial,     1), nchan, length(tmptime));
-  % data.var     = reshape(nanvar (tmptrial, [], 1), nchan, length(tmptime))
-  % data.dof     = reshape(sum(~isnan(tmptrial), 1), nchan, length(tmptime));
-  data.trial   = tmptrial;
-  data.time    = time;
-  data.dimord = 'rpt_chan_time';
+  tlck.trial   = tmptrial;
+  tlck.time    = time;
+  tlck.dimord  = 'rpt_chan_time';
+  tlck.label   = data.label;
+  tlck         = copyfields(data, tlck, {'grad', 'elec', 'opto', 'cfg', 'trialinfo', 'topo', 'unmixing', 'topolabel'});
 end
 
 
@@ -1649,4 +1724,3 @@ end
 % before adding these times, first remove the old ones
 spikeTimes(multiSpikes) = [];
 spikeTimes              = sort([spikeTimes(:); addTimes(:)]);
-

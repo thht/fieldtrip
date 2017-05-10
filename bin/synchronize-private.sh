@@ -272,6 +272,14 @@ ARRAY+=(src/det2x2.mexw64)
 sync ${ARRAY[*]}
 
 ################################################################################
+# dimindex.m
+
+ARRAY=()
+ARRAY+=(private/dimindex.m)
+ARRAY+=(utilities/private/dimindex.m)
+sync ${ARRAY[*]}
+
+################################################################################
 # dimlength.m
 
 ARRAY=()
@@ -385,6 +393,16 @@ ARRAY=()
 ARRAY+=(fileio/private/fixinside.m)
 ARRAY+=(private/fixinside.m)
 ARRAY+=(utilities/private/fixinside.m)
+sync ${ARRAY[*]}
+
+################################################################################
+# fixoldorg.m
+
+ARRAY=()
+ARRAY+=(fileio/private/fixoldorg.m)
+ARRAY+=(forward/private/fixoldorg.m)
+ARRAY+=(plotting/private/fixoldorg.m)
+ARRAY+=(utilities/private/fixoldorg.m)
 sync ${ARRAY[*]}
 
 ################################################################################

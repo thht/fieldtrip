@@ -72,24 +72,36 @@ if ~ft_hastoolbox('spm')
   ft_hastoolbox('spm8', 1);
 end
 
+
 if opt==1
   % use spm_affreg
   
   switch lower(spm('ver'))
     case 'spm2'
       if isdeployed
-        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==2'); end
+        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==1'); end
       else
         template = fullfile(spm('Dir'),'templates','T1.mnc');
       end
       
     case 'spm8'
       if isdeployed
-        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==2'); end
+        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==1'); end
       else
         template = fullfile(spm('Dir'),'templates','T1.nii');
       end
       
+    case 'spm12'
+      if isdeployed
+        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==1'); end
+      else
+        template = fullfile(spm('Dir'),'toolbox','OldNorm','T1.nii');
+        if ~exist('spm_affreg', 'file')
+          addpath(fullfile(spm('Dir'),'toolbox','OldNorm'));
+        end
+      end
+      fprintf('using ''OldNorm'' affine registration\n');
+
     otherwise
       error('unsupported spm-version');
   end
@@ -100,8 +112,7 @@ if opt==1
   V1 = ft_write_mri(tname1, mri.anatomy,  'transform', mri.transform,  'spmversion', spm('ver'), 'dataformat', 'nifti_spm');
   V2 = ft_write_mri(tname2, mri2.anatomy, 'transform', mri2.transform, 'spmversion', spm('ver'), 'dataformat', 'nifti_spm');
   
-  % the below, using just spm_affreg does not work robustly enough in some
-  % cases
+  % the below, using just spm_affreg does not work robustly enough in some cases
   flags.regtype = 'rigid';
   [M, scale]    = spm_affreg(V1,V2,flags);
   
@@ -140,6 +151,19 @@ elseif opt==2
       else
         template = fullfile(spm('Dir'),'templates','T1.nii');
       end
+      
+    case 'spm12'
+      % this uses the 'OldNorm' functionality, so the path needs to be
+      % added, can only be done if non-deployed.
+      if isdeployed
+        if nargin<3, error('you need to specify a template filename when in deployed mode and using opt==2'); end
+      else
+        template = fullfile(spm('Dir'),'toolbox','OldNorm','T1.nii');
+        if ~exist('spm_normalise', 'file')
+          addpath(fullfile(spm('Dir'),'toolbox','OldNorm'));
+        end
+      end
+      fprintf('using ''OldNorm'' normalisation\n');
       
     otherwise
       error('unsupported spm-version');
