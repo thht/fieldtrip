@@ -442,7 +442,7 @@ switch dataformat
     ft_hastoolbox('NPMK', 1);
     % ensure that the filename contains a full path specification,
     % otherwise the low-level function fails
-    [p,~,~] = fileparts(filename);
+    p = fileparts(filename);
     if isempty(p)
       filename = which(filename);
     end
@@ -529,6 +529,13 @@ switch dataformat
     
   case 'ced_spike6mat'
     dat = read_spike6mat_data(filename, 'header', hdr, 'begsample', begsample, 'endsample', endsample, 'chanindx', chanindx);
+    
+  case {'curry_dat', 'curry_cdt'} 
+    [orig, dat] = load_curry_data_file(datafile);
+    if orig.nMultiplex
+        dat = dat';
+    end
+    dat = dat(chanindx, begsample:endsample);
     
   case {'deymed_ini' 'deymed_dat'}
     % the data is stored in a binary *.dat file

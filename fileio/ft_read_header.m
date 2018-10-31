@@ -441,10 +441,10 @@ switch headerformat
     ft_hastoolbox('NPMK', 1);
     % ensure that the filename contains a full path specification,
     % otherwise the low-level function fails
-    [p,n,~] = fileparts(filename);
+    [p,n] = fileparts(filename);
     if isempty(p)
       filename = which(filename);
-      [p,n,~] = fileparts(filename);
+      [p,n] = fileparts(filename);
     end
     
     NEV = openNEV(filename,'noread','nosave');
@@ -472,7 +472,7 @@ switch headerformat
     ft_hastoolbox('NPMK', 1);
     % ensure that the filename contains a full path specification,
     % otherwise the low-level function fails
-    [p, ~, ~] = fileparts(filename);
+    p = fileparts(filename);
     if isempty(p)
       filename = which(filename);
     end
@@ -737,6 +737,18 @@ switch headerformat
   case 'ctf_shm'
     % read the header information from shared memory
     hdr = read_shm_header(filename);
+    
+    
+  case {'curry_dat', 'curry_cdt'}
+    orig            = load_curry_data_file(filename);
+    hdr             = [];
+    hdr.Fs          = orig.fFrequency;
+    hdr.nChans      = orig.nChannels;
+    hdr.nSamples    = orig.nSamples;
+    hdr.nSamplesPre = sum(orig.time<0);
+    hdr.nTrials     = orig.nTrials;
+    hdr.label       = orig.labels(:);
+    hdr.orig        = orig;
     
   case 'dataq_wdq'
     orig            = read_wdq_header(filename);
@@ -2590,8 +2602,8 @@ switch headerformat
     % attempt to run headerformat as a function
     % in case using an external read function was desired, this is where it is executed
     % if it fails, the regular unsupported error message is thrown
-    hdr = feval(headerformat,filename);
     try
+      hdr = feval(headerformat,filename);
     catch
       if strcmp(fallback, 'biosig') && ft_hastoolbox('BIOSIG', 1)
         hdr = read_biosig_header(filename);
