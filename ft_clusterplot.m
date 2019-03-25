@@ -115,7 +115,8 @@ end
 % get the options that are specific for topoplotting
 cfgtopo = keepfields(cfg, {'parameter', 'marker', 'markersymbol', 'markercolor', 'markersize', 'markerfontsize', 'style', 'gridscale', 'interplimits', 'interpolation', 'contournum', 'colorbar', 'shading', 'zlim'});
 % prepare the layout, this only has to be done once
-cfgtopo.layout = ft_prepare_layout(cfg, stat);
+tmpcfg = keepfields(cfg, {'layout', 'elec', 'grad', 'opto', 'showcallinfo'});
+cfgtopo.layout = ft_prepare_layout(tmpcfg, stat);
 cfgtopo.showcallinfo = 'no';
 cfgtopo.feedback = 'no';
 
@@ -139,20 +140,17 @@ switch dimord
     % no more than two dimensions are supported, we can ignore singleton dimensions
     is2D = true;
     if dimsiz(2)==1
-      stat = rmfield(stat, 'freq');
-      stat.dimord = 'chan_time';
-      % remove the singleton dimension in the middle
-      stat.(cfg.parameter) = reshape(stat.(cfg.parameter),dimsiz([1 3]));
-      if isfield(stat, 'posclusterslabelmat')
-        stat.posclusterslabelmat = reshape(stat.posclusterslabelmat, dimsiz([1 3]));
-      end
-      if isfield(stat, 'negclusterslabelmat')
-        stat.negclusterslabelmat = reshape(stat.negclusterslabelmat, dimsiz([1 3]));
-      end
+      tmpcfg = [];
+      tmpcfg.avgoverfreq = 'yes';
+      tmpcfg.keepfreqdim = 'no';
+      tmpcfg.showcallinfo = 'no';
+      stat = ft_selectdata(tmpcfg, stat);
     elseif dimsiz(3)==1
-      stat = rmfield(stat, 'time');
-      stat.dimord = 'chan_freq';
-      % no need to remove the singleton dimension at the end
+      tmpcfg = [];
+      tmpcfg.avgovertime = 'yes';
+      tmpcfg.keeptimedim = 'no';
+      tmpcfg.showcallinfo = 'no';
+      stat = ft_selectdata(tmpcfg, stat);
     else
       ft_error('this only works if either frequency or time is a singleton dimension');
     end
@@ -460,6 +458,13 @@ ft_postamble debug
 ft_postamble trackconfig
 ft_postamble previous stat
 ft_postamble provenance
+ft_postamble savefig
+
+if ~ft_nargout
+  % don't return anything
+  clear cfg
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBFUNCTION

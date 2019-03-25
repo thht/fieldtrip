@@ -126,7 +126,7 @@ url = {
   'SQDPROJECT'    'see http://www.isr.umd.edu/Labs/CSSL/simonlab'
   'BCT'           'see http://www.brain-connectivity-toolbox.net/'
   'CCA'           'see http://www.imt.liu.se/~magnus/cca or contact Magnus Borga'
-  'EGI_MFF'       'see http://www.egi.com/ or contact either Phan Luu or Colin Davey at EGI'
+  'EGI_MFF_V2'    'see http://www.egi.com/ or contact either Phan Luu or Colin Davey at EGI'
   'TOOLBOX_GRAPH' 'see http://www.mathworks.com/matlabcentral/fileexchange/5355-toolbox-graph or contact Gabriel Peyre'
   'NETCDF'        'see http://www.mathworks.com/matlabcentral/fileexchange/15177'
   'MYSQL'         'see http://www.mathworks.com/matlabcentral/fileexchange/8663-mysql-database-connector'
@@ -156,6 +156,8 @@ url = {
   'JSONLAB'       'see https://se.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files'
   'MFFMATLABIO'   'see https://github.com/arnodelorme/mffmatlabio'
   'JSONIO'        'see https://github.com/gllmflndn/JSONio'
+  'CPD'           'see https://sites.google.com/site/myronenko/research/cpd'
+  'MVPA_LIGHT'    'see https://github.com/treder/MVPA-Light'
   };
 
 if nargin<2
@@ -215,6 +217,8 @@ switch toolbox
     dependency = {'rawdata', 'channames'};
   case 'MEG-CALC'
     dependency = {'megmodel', 'megfield', 'megtrans'};
+  case 'MVPA_LIGHT'
+    dependency = {'mv_crossvalidate','train_lda'};
   case 'BIOSIG'
     dependency = {'sopen', 'sread'};
   case 'EEG'
@@ -385,6 +389,8 @@ switch toolbox
     dependency = {'fig2plotly' 'savejson'};
   case 'JSONIO'
     dependency = {'jsonread', 'jsonwrite', 'jsonread.mexa64'};
+  case 'CPD' 
+    dependency = {'cpd', 'cpd_affine', 'cpd_P'};
     
     % the following are FieldTrip modules/toolboxes
   case 'FILEIO'
@@ -583,7 +589,7 @@ fttoolboxpath = fullfile(fttrunkpath, lower(toolbox_name));
 needle=[pathsep fttoolboxpath pathsep];
 haystack = [pathsep path() pathsep];
 
-status = ~isempty(findstr(needle, haystack));
+status = ~isempty(strfind(haystack, needle));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % helper function

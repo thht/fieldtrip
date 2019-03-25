@@ -1,6 +1,6 @@
 function test_tutorial_connectivity3(datadir)
 
-% MEM 1500mb
+% MEM 3gb
 % WALLTIME 00:10:00
 
 % TEST ft_timelockanalysis ft_sourceanalysis ft_connectivityanalysis ft_prepare_sourcemodel headsurface
@@ -32,7 +32,7 @@ timelock              = ft_timelockanalysis(cfg, data);
 cfg             = [];
 cfg.method      = 'lcmv';
 cfg.hdmfile     = fullfile(datadir,'SubjectCMC.hdm');
-cfg.grid.pos    = maxpos;
+cfg.sourcemodel.pos    = maxpos;
 cfg.keepfilter  = 'yes';
 source          = ft_sourceanalysis(cfg, timelock);
 
