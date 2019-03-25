@@ -173,7 +173,7 @@ if ~strcmp(sens.unit, 'm')
   error('Sensors MUST be provided in meters!');
 end %if
 
-if ~strcmp(cfg.grid.unit, 'm')
+if ~strcmp(cfg.sourcemodel.unit, 'm')
   error('The grid MUST be provided in meters!');
 end %if
 
