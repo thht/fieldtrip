@@ -3,7 +3,7 @@ function test_pull929
 % MEM 1000mb
 % WALLTIME 00:10:00
 
-% TEST ft_scalpcurrentdensity ft_fetch_sens
+% DEPENDENCY ft_scalpcurrentdensity ft_fetch_sens
 
 %% load data
 % the data contains an ERP with 128 channels and 2001 time bins
@@ -82,7 +82,7 @@ end
 
 shuffledata = ERP_standard;
 randidx = randperm(length(shuffledata.label));
-[~,unidx] = sort(randidx); % unshuffle
+[dum, unidx] = sort(randidx); % unshuffle
 shuffledata.avg = shuffledata.avg(randidx,:);
 shuffledata.var = shuffledata.var(randidx,:);
 shuffledata.dof = shuffledata.dof(randidx,:);

@@ -2,8 +2,7 @@ function failed_bug2850
 
 % WALLTIME 00:10:00
 % MEM 2gb
-
-% TEST ft_sourceanalysis ft_eloreta
+% DEPENDENCY ft_sourceanalysis ft_eloreta
 
 load(dccnpath('/home/common/matlab/fieldtrip/data/test/avgFIC.mat'));
 
@@ -15,8 +14,8 @@ vol.unit = 'cm';
 cfg = [];
 cfg.headmodel = vol;
 cfg.grad = avgFIC.grad;
-cfg.sourcemodel.resolution = 1;
-cfg.sourcemodel.unit = 'cm';
+cfg.resolution = 1;
+cfg.unit = 'cm';
 grid = ft_prepare_sourcemodel(cfg);
 
 % due to the spherical volume conductor and the regular grid, some dipole

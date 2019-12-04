@@ -1,6 +1,6 @@
 function markdown2matlab(infile,outfile,varargin)
 
-% MARKDOWN2MATLAB converts a MarkDown file to a MATLAB script or function. All text
+% MARKDOWN2MATLAB converts a Markdown file to a MATLAB script or function. All text
 % is converted to comments, headings are converted to comment lines starting with %%
 % sections with code are properly formatted, and words that appear in bold, italic or
 % monospace are converted.
@@ -54,7 +54,7 @@ end
 [inpath, inname, inext] = fileparts(infile);
 if isempty(inpath), [inpath, inname, inext] = fileparts(which([inname inext])); end
 if ~strcmp(inext,'.md')
-  error('please specify a MarkDown file')
+  error('please specify a Markdown file')
 end
 
 if nargin < 2 || isempty(outfile)
@@ -130,9 +130,8 @@ while ~feof(infid)
     
   elseif match(line, '^ *[-+*] ')
     % unordered list
-    [~,endIndex] = regexp(line, '^ *[-+*] ');
-    
-    [~,level] = regexp(line, '^ *');
+    [dum,endIndex] = regexp(line, '^ *[-+*] ');
+    [dum,level] = regexp(line, '^ *');
     if isempty(level)
       level = 0;
     end
@@ -142,7 +141,7 @@ while ~feof(infid)
     
   elseif match(line, '^    ')
     % normal code
-    [~,endIndex] = regexp(line, '^    ');
+    [dum,endIndex] = regexp(line, '^    ');
     remainder = line((endIndex+1):end);
     fprintf(outfid, '%s\n', remainder);
     state = 'code';
@@ -156,13 +155,13 @@ while ~feof(infid)
     
   elseif match(line, '^ *[0-9]*\.')
     % ordered list
-    [~,endIndex] = regexp(line, '^ *[0-9]*\. ');
+    [dum,endIndex] = regexp(line, '^ *[0-9]*\. ');
     remainder = reformat(line((endIndex+1):end));
     fprintf(outfid, '%% # %s\n', remainder);
     
   elseif match(line, '^#')
     % heading
-    [~,endIndex] = regexp(line, '^# *');
+    [dum,endIndex] = regexp(line, '^# *');
     remainder = reformat(line((endIndex+1):end));
     fprintf(outfid, '%%%% %s\n', remainder);
     

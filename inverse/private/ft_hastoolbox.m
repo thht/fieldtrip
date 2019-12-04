@@ -1,21 +1,21 @@
 function [status] = ft_hastoolbox(toolbox, autoadd, silent)
 
-% FT_HASTOOLBOX tests whether an external toolbox is installed. Optionally
-% it will try to determine the path to the toolbox and install it
-% automatically.
+% FT_HASTOOLBOX tests whether an external toolbox is installed. Optionally it will
+% try to determine the path to the toolbox and install it automatically.
 %
 % Use as
 %   [status] = ft_hastoolbox(toolbox, autoadd, silent)
 %
-% autoadd = 0 means that it will not be added
-% autoadd = 1 means that give an error if it cannot be added
-% autoadd = 2 means that give a warning if it cannot be added
-% autoadd = 3 means that it remains silent if it cannot be added
+% autoadd = -1 means that it will check and give an error when not yet installed
+% autoadd =  0 means that it will check and give a warning when not yet installed
+% autoadd =  1 means that it will check and give an error if it cannot be added
+% autoadd =  2 means that it will check and give a warning if it cannot be added
+% autoadd =  3 means that it will check but remain silent if it cannot be added
 %
 % silent = 0 means that it will give some feedback about adding the toolbox
 % silent = 1 means that it will not give feedback
 
-% Copyright (C) 2005-2017, Robert Oostenveld
+% Copyright (C) 2005-2019, Robert Oostenveld
 %
 % This file is part of FieldTrip, see http://www.fieldtriptoolbox.org
 % for the documentation and details.
@@ -62,6 +62,7 @@ url = {
   'DSS'        'see http://www.cis.hut.fi/projects/dss'
   'EEGLAB'     'see http://www.sccn.ucsd.edu/eeglab'
   'NWAY'       'see http://www.models.kvl.dk/source/nwaytoolbox'
+  'SPM'        'see http://www.fil.ion.ucl.ac.uk/spm'
   'SPM99'      'see http://www.fil.ion.ucl.ac.uk/spm'
   'SPM2'       'see http://www.fil.ion.ucl.ac.uk/spm'
   'SPM5'       'see http://www.fil.ion.ucl.ac.uk/spm'
@@ -153,11 +154,14 @@ url = {
   'BREWERMAP'     'see https://nl.mathworks.com/matlabcentral/fileexchange/45208-colorbrewer--attractive-and-distinctive-colormaps'
   'CELLFUNCTION'  'see https://github.com/schoffelen/cellfunction'
   'MARS'          'see http://www.parralab.org/mars'
+  'LAGEXTRACTION' 'see https://github.com/agramfort/eeglab-plugin-ieee-tbme-2010'
   'JSONLAB'       'see https://se.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files'
   'MFFMATLABIO'   'see https://github.com/arnodelorme/mffmatlabio'
   'JSONIO'        'see https://github.com/gllmflndn/JSONio'
   'CPD'           'see https://sites.google.com/site/myronenko/research/cpd'
-  'MVPA_LIGHT'    'see https://github.com/treder/MVPA-Light'
+  'MVPA-LIGHT'    'see https://github.com/treder/MVPA-Light'
+  'XDF'           'see https://github.com/xdf-modules/xdf-Matlab'
+  'MRTRIX'        'see https://mrtrix.org'
   };
 
 if nargin<2
@@ -217,7 +221,7 @@ switch toolbox
     dependency = {'rawdata', 'channames'};
   case 'MEG-CALC'
     dependency = {'megmodel', 'megfield', 'megtrans'};
-  case 'MVPA_LIGHT'
+  case 'MVPA-LIGHT'
     dependency = {'mv_crossvalidate','train_lda'};
   case 'BIOSIG'
     dependency = {'sopen', 'sread'};
@@ -258,21 +262,21 @@ switch toolbox
   case '4D-VERSION'
     dependency  = {'read4d', 'read4dhdr'};
   case {'STATS', 'STATISTICS'}
-    dependency = has_license('statistics_toolbox');               % also check the availability of a toolbox license
+    dependency = {has_license('statistics_toolbox'), 'betacdf', 'raylcdf', 'unidcdf'};      % also check the availability of a toolbox license
   case {'OPTIM', 'OPTIMIZATION'}
-    dependency = has_license('optimization_toolbox');             % also check the availability of a toolbox license
+    dependency = {has_license('optimization_toolbox'), 'fminunc', 'optimset'};              % also check the availability of a toolbox license
   case {'SPLINES', 'CURVE_FITTING'}
-    dependency = has_license('curve_fitting_toolbox');            % also check the availability of a toolbox license
+    dependency = {has_license('curve_fitting_toolbox'), 'smooth', 'fit'};                   % also check the availability of a toolbox license
   case 'COMM'
-    dependency = {has_license('communication_toolbox'), 'de2bi'}; % also check the availability of a toolbox license
+    dependency = {has_license('communication_toolbox'), 'de2bi', 'fskmod', 'pskmod'};       % also check the availability of a toolbox license
   case 'SIGNAL'
-    dependency = {has_license('signal_toolbox'), 'window'};       % also check the availability of a toolbox license
+    dependency = {has_license('signal_toolbox'), 'window', 'hanning'};                      % also check the availability of a toolbox license
   case 'IMAGES'
-    dependency = has_license('image_toolbox');                    % also check the availability of a toolbox license
+    dependency = {has_license('image_toolbox'), 'imerode', 'imdilate'};                     % also check the availability of a toolbox license
   case {'DCT', 'DISTCOMP'}
-    dependency = has_license('distrib_computing_toolbox');        % also check the availability of a toolbox license
+    dependency = {has_license('distrib_computing_toolbox'), 'parpool', 'batch'};            % also check the availability of a toolbox license
   case 'COMPILER'
-    dependency = has_license('compiler');                         % also check the availability of a toolbox license
+    dependency = {has_license('compiler'), 'mcc', 'mcr'};                                   % also check the availability of a toolbox license
   case 'FASTICA'
     dependency = 'fpica';
   case 'BRAINSTORM'
@@ -328,8 +332,8 @@ switch toolbox
   case 'NETCDF'
     dependency = {'netcdf'};
   case 'MYSQL'
-    % not sure if 'which' would work fine here, so use 'exist'
-    dependency = has_mex('mysql'); % this only consists of a single mex file
+    % this only consists of a single mex file
+    dependency = has_mex('mysql');
   case 'ISO2MESH'
     dependency = {'vol2surf', 'qmeshcut'};
   case 'QSUB'
@@ -383,14 +387,20 @@ switch toolbox
     dependency = {'ghdf5read' 'ghdf5fileimport'};
   case 'MARS'
     dependency = {'spm_mars_mrf'};
+  case 'LAGEXTRACTION'
+    dependency = {'extractlag' 'perform_realign'};
   case 'JSONLAB'
     dependency = {'loadjson' 'savejson'};
   case 'PLOTLY'
     dependency = {'fig2plotly' 'savejson'};
   case 'JSONIO'
     dependency = {'jsonread', 'jsonwrite', 'jsonread.mexa64'};
-  case 'CPD' 
+  case 'CPD'
     dependency = {'cpd', 'cpd_affine', 'cpd_P'};
+  case 'XDF'
+    dependency = {'load_xdf', 'load_xdf_innerloop'};
+  case 'MRTRIX'
+    dependency = {'read_mrtrix'};
     
     % the following are FieldTrip modules/toolboxes
   case 'FILEIO'
@@ -427,8 +437,8 @@ if ~status && ~isempty(fallback_toolbox)
   toolbox = fallback_toolbox;
 end
 
-% try to determine the path of the requested toolbox
-if autoadd>0 && ~status
+% try to determine the path of the requested toolbox and add it
+if ~status && autoadd>0
   
   % for core FieldTrip modules
   prefix = fileparts(which('ft_defaults'));
@@ -494,6 +504,16 @@ if autoadd>0 && ~status
       % fail silently
     end
   end
+  
+elseif ~status && autoadd<0
+  % the toolbox is not on the path and should not be added
+  sel = find(strcmp(url(:,1), toolbox));
+  if ~isempty(sel)
+    msg = sprintf('the %s toolbox is not installed, %s', toolbox, url{sel, 2});
+  else
+    msg = sprintf('the %s toolbox is not installed', toolbox);
+  end
+  ft_error(msg);
 end
 
 % this function is called many times in FieldTrip and associated toolboxes
@@ -511,20 +531,35 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function status = myaddpath(toolbox, silent)
 global ft_default
+
+if ~isfolder(toolbox)
+  % search for a case-insensitive match, this is needed for MVPA-Light
+  [p, f] = fileparts(toolbox);
+  dirlist = dir(p);
+  sel = strcmpi({dirlist.name}, f);
+  if sum(sel)==1
+    toolbox = fullfile(p, dirlist(sel).name);
+  end
+end
+
 if isdeployed
   ft_warning('cannot change path settings for %s in a compiled application', toolbox);
   status = true;
-elseif exist(toolbox, 'dir')
+elseif isfolder(toolbox)
   if ~silent
     ft_warning('off','backtrace');
     ft_warning('adding %s toolbox to your MATLAB path', toolbox);
     ft_warning('on','backtrace');
   end
-  if any(~cellfun(@isempty, regexp(toolbox, {'spm2', 'spm5', 'spm8', 'spm12'})))
+  if any(~cellfun(@isempty, regexp(lower(toolbox), {'spm2$', 'spm5$', 'spm8$', 'spm12$'})))
     % SPM needs to be added with all its subdirectories
     addpath(genpath(toolbox));
     % check whether the mex files are compatible
     check_spm_mex;
+  elseif ~isempty(regexp(lower(toolbox), 'mvpa-light$', 'once'))
+    % this comes with its own startup script
+    addpath(fullfile(toolbox, 'startup'))
+    startup_MVPA_Light;
   else
     addpath(toolbox);
   end
@@ -585,11 +620,9 @@ end
 function status = is_subdir_in_fieldtrip_path(toolbox_name)
 fttrunkpath = unixpath(fileparts(which('ft_defaults')));
 fttoolboxpath = fullfile(fttrunkpath, lower(toolbox_name));
-
-needle=[pathsep fttoolboxpath pathsep];
+needle   = [pathsep fttoolboxpath pathsep];
 haystack = [pathsep path() pathsep];
-
-status = ~isempty(strfind(haystack, needle));
+status   = contains(haystack, needle);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % helper function
@@ -671,4 +704,3 @@ status = ~isempty(w) && ~isequal(w, 'variable');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function tf = isfolder(dirpath)
 tf = exist(dirpath,'dir') == 7;
-

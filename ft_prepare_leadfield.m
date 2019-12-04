@@ -6,7 +6,7 @@ function [sourcemodel, cfg] = ft_prepare_leadfield(cfg, data)
 % Use as
 %   [sourcemodel] = ft_prepare_leadfield(cfg, data)
 %
-% It is neccessary to input the data on which you want to perform the
+% It is necessary to input the data on which you want to perform the
 % inverse computations, since that data generally contain the gradiometer
 % information and information about the channels that should be included in
 % the forward model computation. The data structure can be either obtained
@@ -19,10 +19,10 @@ function [sourcemodel, cfg] = ft_prepare_leadfield(cfg, data)
 %
 % The positions of the sources can be specified as a regular 3-D
 % sourcemodel that is aligned with the axes of the head coordinate system
-%   cfg.sourcemodel.xgrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
-%   cfg.sourcemodel.ygrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
-%   cfg.sourcemodel.zgrid      = vector (e.g.   0:1:20) or 'auto' (default = 'auto')
-%   cfg.sourcemodel.resolution = number (e.g. 1 cm) for automatic sourcemodel generation
+%   cfg.xgrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
+%   cfg.ygrid      = vector (e.g. -20:1:20) or 'auto' (default = 'auto')
+%   cfg.zgrid      = vector (e.g.   0:1:20) or 'auto' (default = 'auto')
+%   cfg.resolution = number (e.g. 1 cm) for automatic sourcemodel generation
 % Alternatively the position of a few sources at locations of interest can
 % be specified, for example obtained from an anatomical or functional MRI
 %   cfg.sourcemodel.pos        = N*3 matrix with position of each source
@@ -69,7 +69,7 @@ function [sourcemodel, cfg] = ft_prepare_leadfield(cfg, data)
 % file on disk. This mat files should contain only a single variable named 'data',
 % corresponding to the input structure.
 %
-% See also FT_SOURCEANALYSIS, FT_DIPOLEFITTING, FT_PREPARE_HEADMODEL,FT_PREPARE_SOURCEMODEL
+% See also FT_SOURCEANALYSIS, FT_DIPOLEFITTING, FT_PREPARE_HEADMODEL, FT_PREPARE_SOURCEMODEL
 
 % Undocumented local options:
 % cfg.feedback
@@ -209,6 +209,9 @@ end
 insideindx = find(sourcemodel.inside);
 
 if ft_headmodeltype(headmodel, 'openmeeg')
+  
+  ft_hastoolbox('openmeeg', 1);  % add to path (if not yet on path)
+  
   % repeated system calls to the openmeeg executable makes it rather slow
   % calling it once is much more efficient
   fprintf('calculating leadfield for all positions at once, this may take a while...\n');
@@ -275,7 +278,7 @@ if ft_headmodeltype(headmodel, 'openmeeg')
   % any post-computation options can be applied (e.g., normalization, etc.)
   lf = ft_compute_leadfield(sourcemodel.pos(diprange,:), sens, headmodel, 'lf', lf, 'reducerank', cfg.reducerank, 'normalize', cfg.normalize, 'normalizeparam', cfg.normalizeparam, 'backproject', cfg.backproject);
 
-  % reshape result into sourcemodel.leadfield cell array
+  % reshape result into sourcemodel.leadfield cell-array
   for i=1:ndip
     sourcemodel.leadfield{insideindx(i)} = lf(:,3*(i-1) + [1:3]);
   end
